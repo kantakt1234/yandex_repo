@@ -3,49 +3,54 @@ import sys
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+from UI.addEditCoffeeForm import Ui_MainWindow2
+from UI.ui_file import Ui_MainWindow
 
 
 class FilmInteraction(QMainWindow):
     def __init__(self, window):
         self.window = window
         super().__init__()
-        self.con = sqlite3.connect("coffee.sqlite")
+        self.con = sqlite3.connect("data/coffee.sqlite")
         self.cur = self.con.cursor()
 
     def load_ui(self):
-        uic.loadUi("addEditCoffeeForm.ui", self)
-        self.comboBox.addItems(['Растворимый', 'Зерновой'])
-        text = self.sender().text()
-        if text == 'Добавить':
-            self.setWindowTitle('Добавить элемент')
-            self.add_btn.clicked.connect(lambda: self.coffee(text))
-        elif text == 'Редактировать':
-            if self.window.tableWidget.selectedItems():
-                row = self.window.tableWidget.selectedItems()[0].row()
-                id = self.window.tableWidget.item(row, 0).text()
-                name = self.window.tableWidget.item(row, 1).text()
-                degree = self.window.tableWidget.item(row, 2).text()
-                gro_or_bea = self.window.tableWidget.item(row, 3).text()
-                taste = self.window.tableWidget.item(row, 4).text()
-                price = self.window.tableWidget.item(row, 5).text()
-                size = self.window.tableWidget.item(row, 6).text()
-                self.setWindowTitle('Редактирование записи')
-                self.title_edit.setText(name)
-                self.degree_edit.setText(degree)
-                self.comboBox.setCurrentText(gro_or_bea)
-                self.taste_edit.setText(taste)
-                self.price_edit.setText(price)
-                self.size_edit.setText(size)
-                self.add_btn.clicked.connect(lambda: self.coffee(text, id))
+        try:
+            self.ui = Ui_MainWindow2(self)
+            self.ui.comboBox.addItems(['Растворимый', 'Зерновой'])
+            text = self.sender().text()
+            if text == 'Добавить':
+                self.setWindowTitle('Добавить элемент')
+                self.ui.add_btn.clicked.connect(lambda: self.coffee(text))
+            elif text == 'Редактировать':
+                if self.window.ui.tableWidget.selectedItems():
+                    row = self.window.ui.tableWidget.selectedItems()[0].row()
+                    id = self.window.ui.tableWidget.item(row, 0).text()
+                    name = self.window.ui.tableWidget.item(row, 1).text()
+                    degree = self.window.ui.tableWidget.item(row, 2).text()
+                    gro_or_bea = self.window.ui.tableWidget.item(row, 3).text()
+                    taste = self.window.ui.tableWidget.item(row, 4).text()
+                    price = self.window.ui.tableWidget.item(row, 5).text()
+                    size = self.window.ui.tableWidget.item(row, 6).text()
+                    self.setWindowTitle('Редактирование записи')
+                    self.ui.title_edit.setText(name)
+                    self.ui.degree_edit.setText(degree)
+                    self.ui.comboBox.setCurrentText(gro_or_bea)
+                    self.ui.taste_edit.setText(taste)
+                    self.ui.price_edit.setText(price)
+                    self.ui.size_edit.setText(size)
+                    self.ui.add_btn.clicked.connect(lambda: self.coffee(text, id))
+        except Exception as ex:
+            print(ex)
 
     def coffee(self, i, id=None):
         try:
-            title = self.title_edit.text()
-            degree = self.degree_edit.text()
-            bea_gro = self.comboBox.currentText()
-            taste = self.taste_edit.text()
-            price = self.price_edit.text()
-            size = self.size_edit.text()
+            title = self.ui.title_edit.text()
+            degree = self.ui.degree_edit.text()
+            bea_gro = self.ui.comboBox.currentText()
+            taste = self.ui.taste_edit.text()
+            price = self.ui.price_edit.text()
+            size = self.ui.size_edit.text()
             if i == 'Добавить':
                 id = sorted([i[0] for i in self.cur.execute('SELECT id FROM coffee').fetchall()])[-1]
                 self.cur.execute(f'''INSERT INTO coffee(id, name, degree_roasting, ground_or_beans, taste_description, price, package_size)
@@ -64,11 +69,11 @@ class FilmInteraction(QMainWindow):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("main.ui", self)
-        self.con = sqlite3.connect("coffee.sqlite")
+        self.ui = Ui_MainWindow(self)
+        self.con = sqlite3.connect("data/coffee.sqlite")
         self.cur = self.con.cursor()
         self.load_db()
-        for i in [self.add_btn, self.up_btn]:
+        for i in [self.ui.add_btn, self.ui.up_btn]:
             i.clicked.connect(lambda x: self.add_or_delete())
 
     def warn(self, text):
@@ -81,7 +86,7 @@ class MainWindow(QMainWindow):
 
     def add_or_delete(self):
         window = ex_2
-        table = self.tableWidget
+        table = self.ui.tableWidget
         if (self.sender().text() == 'Редактировать' and table.selectedItems()) or self.sender().text() == 'Добавить':
             window.show()
             window.load_ui()
@@ -90,7 +95,7 @@ class MainWindow(QMainWindow):
 
     def load_db(self):
         res = self.con.cursor().execute('SELECT * FROM coffee').fetchall()
-        table = self.tableWidget
+        table = self.ui.tableWidget
         table.setColumnCount(7)
         table.setHorizontalHeaderLabels(['ИД', 'Название', 'Степень обжарки', 'Зерновой/растворимый', 'Вкус', 'Цена', 'Объем упаковки'])
         table.setRowCount(0)
